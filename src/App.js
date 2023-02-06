@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Card, Container, Row, Button } from 'react-bootstrap';
 import CytoscapeComponent from 'react-cytoscapejs';
-import attractions from './data/pontos_turisticos';
+import attractions from './utils/pontos_turisticos';
+import CalculateTSPCostNPath from './utils/tsp';
 
 const stylesheet = [
   {
@@ -61,6 +62,11 @@ export default function App() {
       setSelectedAttractions([...selectedAttractions, index])
   }
 
+  const handleButtonSubmit = () => {
+    const { cost, path } = CalculateTSPCostNPath(selectedAttractions.map((attraction) => parseInt(attraction)))
+    console.log(cost, path)
+  }
+
 
   return (
     <div style={{ width: '100%', height: '100vh', overflow: 'auto', backgroundColor: '#D3D3D3', padding: '50px 0' }}>
@@ -75,26 +81,30 @@ export default function App() {
           </span>
         </Container>
         <Row>
-          {attractions.map((attraction, index) =>
-            <Card
-              key={index + 1}
-              style={{
-                cursor: 'pointer', width: '15rem', margin: '10px', padding: '0px',
-                backgroundColor: selectedAttractions.includes(index + 1) ? '#20B2AA' : 'white'
-              }}
-              onClick={() => handleCardClick(index + 1)}
-            >
-              <Card.Img
-                variant="top" src={attraction.image}
-                style={{ height: '60%', borderRadius: '8px' }}
-              />
-              <Card.Body>
-                <Card.Title className='text-center'>
-                  {attraction.name}
-                </Card.Title>
-              </Card.Body>
-            </Card>
-          )}
+          {attractions.map((attraction, index) => {
+            if (index !== 0) {
+              return <Card
+                key={index}
+                style={{
+                  cursor: 'pointer', width: '15rem', margin: '10px', padding: '0px',
+                  backgroundColor: selectedAttractions.includes(index) ? '#20B2AA' : 'white'
+                }}
+                onClick={() => handleCardClick(index)}
+              >
+                <Card.Img
+                  variant="top" src={attraction.image}
+                  style={{ height: '60%' }}
+                />
+                <Card.Body>
+                  <Card.Title className='text-center'>
+                    {attraction.name}
+                  </Card.Title>
+                </Card.Body>
+              </Card>
+            } else {
+              return <></>
+            }
+          })}
           {/* <CytoscapeComponent
           elements={elements}
           // autolock
@@ -106,7 +116,7 @@ export default function App() {
           }}
         /> */}
         </Row>
-        <Button variant="info" type="submit" style={{ marginTop: '30px' }}>
+        <Button onClick={handleButtonSubmit} variant="info" style={{ marginTop: '30px' }}>
           Obter menor rota
         </Button>
       </Container >
