@@ -1,59 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Container, Row, Button } from 'react-bootstrap';
-import CytoscapeComponent from 'react-cytoscapejs';
+import { Card, Container, Row, Button, ListGroup, Badge, Image } from 'react-bootstrap';
 import attractions from './utils/pontos_turisticos';
 import CalculateTSPCostNPath from './utils/tsp';
 
-const stylesheet = [
-  {
-    selector: 'node',
-    style: {
-      width: 50,
-      height: 50,
-      "font-size": "50px",
-      label: 'data(label)',
-    },
-  },
-  {
-    selector: 'edge',
-    style: {
-      width: 10,
-      "font-size": "50px",
-      label: 'data(label)',
-    },
-  },
-];
-
-// const buildElements = () => {
-//   let elements = []
-
-//   const screenWidth = window.screen.width
-//   const screenHeight = window.screen.width
-
-//   for (let i = 0; i < data.length; i++) {
-//     elements.push({ data: { id: i, label: data[i].name }, position: { x: screenWidth * 0.1 * data[i].position_x, y: screenHeight * 0.1 * data[i].position_y } })
-
-//     // for (let j = i; j < data[i].edges.length; j++) {
-//     //   if (data[i].edges[j] !== 0) {
-//     //     elements.push({ data: { source: i, target: j, label: `${data[i].edges[j]} m` }, selectable: false })
-//     //   }
-//     // }
-//   }
-
-//   // console.log(elements)
-
-//   return elements
-// }
-
 export default function App() {
   const [selectedAttractions, setSelectedAttractions] = useState([0])
-
-  const setListeners = (cy) => {
-    // example cytoscape event listener
-    cy.on('mouseover', 'edge', (event) => {
-      console.log(cy)
-    });
-  };
+  const [showResult, setShowResult] = useState(false)
+  const [resultPath, setResultPath] = useState([])
 
   const handleCardClick = (index) => {
     if (selectedAttractions.includes(index))
@@ -62,11 +15,16 @@ export default function App() {
       setSelectedAttractions([...selectedAttractions, index])
   }
 
-  const handleButtonSubmit = () => {
-    const { cost, path } = CalculateTSPCostNPath(selectedAttractions.map((attraction) => parseInt(attraction)))
-    console.log(cost, path)
-  }
+  const handleButtonClick = () => {
+    const { cost, path } = CalculateTSPCostNPath(
+      selectedAttractions.map((attraction) => parseInt(attraction))
+    )
 
+    setResultPath(path)
+    setShowResult(true)
+
+
+  }
 
   return (
     <div style={{ width: '100%', height: '100vh', overflow: 'auto', backgroundColor: '#D3D3D3', padding: '50px 0' }}>
@@ -80,46 +38,58 @@ export default function App() {
             hospedado, visite todos os pontos escolhidos, e retorne novamente à pousada, percorrendo o menor caminho possível.
           </span>
         </Container>
-        <Row>
-          {attractions.map((attraction, index) => {
-            if (index !== 0) {
-              return <Card
-                key={index}
-                style={{
-                  cursor: 'pointer', width: '15rem', margin: '10px', padding: '0px',
-                  backgroundColor: selectedAttractions.includes(index) ? '#20B2AA' : 'white'
-                }}
-                onClick={() => handleCardClick(index)}
-              >
-                <Card.Img
-                  variant="top" src={attraction.image}
-                  style={{ height: '60%' }}
-                />
-                <Card.Body>
-                  <Card.Title className='text-center'>
-                    {attraction.name}
-                  </Card.Title>
-                </Card.Body>
-              </Card>
-            } else {
-              return <></>
-            }
-          })}
-          {/* <CytoscapeComponent
-          elements={elements}
-          // autolock
-          style={{ width: '100vw', height: '80vh' }}
-          layout={{ name: 'preset' }}
-          stylesheet={stylesheet}
-          cy={(cy) => {
-            setListeners(cy);
-          }}
-        /> */}
-        </Row>
-        <Button onClick={handleButtonSubmit} variant="info" style={{ marginTop: '30px' }}>
-          Obter menor rota
+        {showResult ?
+          <ListGroup as="ol" numbered style={{ width: '80%' }}>
+            {resultPath.map((attractionIndex, loopIndex) =>
+              loopIndex !== resultPath.length ?
+                <ListGroup.Item as="li" className="d-flex justify-content-between align-items-start">
+                  <div className="ms-2 me-auto" style={{ width: '150px' }}>
+                    <Image fluid rounded srcSet={attractions[attractionIndex].image} />
+                    {attractions[attractionIndex].name}
+                  </div>
+                  {/* <div className="ms-2 me-auto">
+                  `Saia de ${attractions[attraction].name} para ${attractions[resultPath[index + 1]].name} percorrendo km`
+                </div>
+                <div style={{ width: '100px' }}> */}
+                  <div className="ms-2 me-auto" style={{ width: '150px' }}>
+                    <Image fluid rounded srcSet={attractions[resultPath[loopIndex + 1]]?.image} />
+                    {attractions[resultPath[loopIndex + 1]]?.name}
+                  </div>
+                </ListGroup.Item>
+                : <></>
+            )}
+          </ListGroup>
+          : <Row style={{ justifyContent: 'space-evenly' }}>
+            {attractions.map((attraction, index) =>
+              index === 0 ?
+                <></> :
+                <Card
+                  key={index}
+                  style={{
+                    cursor: 'pointer', width: '15rem', margin: '10px', padding: '0px',
+                    backgroundColor: selectedAttractions.includes(index) ? '#20B2AA' : 'white'
+                  }}
+                  onClick={() => handleCardClick(index)}
+                >
+                  <Card.Img
+                    variant="top" src={attraction.image}
+                    style={{ height: '60%' }}
+                  />
+                  <Card.Body>
+                    <Card.Title className='text-center'>
+                      {attraction.name}
+                    </Card.Title>
+                  </Card.Body>
+                </Card>
+            )}
+          </Row>
+        }
+        <Button
+          variant={showResult ? "secondary" : "info"} style={{ marginTop: '30px' }}
+          onClick={handleButtonClick}>
+          {showResult ? "Escolher novos locais" : "Obter menor rota"}
         </Button>
       </Container >
-    </div>
+    </div >
   );
 }

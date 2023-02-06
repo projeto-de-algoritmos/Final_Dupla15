@@ -9,7 +9,7 @@ const CalculateTSPCostNPath = (nodes) => {
         memo[i] = new Array(1 << N).fill(-1)
     }
 
-    // PATH (necessary to backtracking)
+    // PATH (necessary for backtracking)
     let path = new Array(N)
     for (let i = 0; i < N; i++) {
         path[i] = new Array(1 << N).fill(-1)
@@ -22,6 +22,7 @@ const CalculateTSPCostNPath = (nodes) => {
         if (nodes.includes(i)) {
             mapNodes[row] = i
             dist[row] = new Array(N)
+
             let column = 0
             for (let j = 0; j < attractions.length; j++) {
                 if (nodes.includes(j)) {
@@ -41,20 +42,20 @@ const CalculateTSPCostNPath = (nodes) => {
         if (memo[i][mask] !== -1)
             return memo[i][mask]
 
-        let res = Infinity
+        let minCost = Infinity
         for (let j = 0; j < N; j++) {
             if (mask & (1 << j))
                 continue
 
             let cost = calculateTSPCost(j, mask | (1 << j), N) + dist[i][j]
-            if (cost < res) {
-                res = cost
+            if (cost < minCost) {
+                minCost = cost
                 path[i][mask] = j
             }
         }
 
-        memo[i][mask] = res
-        return res
+        memo[i][mask] = minCost
+        return minCost
     }
 
     const getPath = () => {
