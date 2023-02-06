@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Card, Container, Row, Button, ListGroup, Badge, Image } from 'react-bootstrap';
+import React, { useState } from 'react';
+import { Card, Container, Row, Button, ListGroup, Image } from 'react-bootstrap';
 import attractions from './utils/pontos_turisticos';
 import CalculateTSPCostNPath from './utils/tsp';
 
@@ -7,6 +7,7 @@ export default function App() {
   const [selectedAttractions, setSelectedAttractions] = useState([0])
   const [showResult, setShowResult] = useState(false)
   const [resultPath, setResultPath] = useState([])
+  const [minCost, setMinCost] = useState(0)
 
   const handleCardClick = (index) => {
     if (selectedAttractions.includes(index))
@@ -15,20 +16,29 @@ export default function App() {
       setSelectedAttractions([...selectedAttractions, index])
   }
 
+  const resetAttractions = () => {
+    setSelectedAttractions([0])
+    setShowResult(false)
+    setResultPath([])
+    setMinCost(0)
+  }
+
   const handleButtonClick = () => {
-    const { cost, path } = CalculateTSPCostNPath(
-      selectedAttractions.map((attraction) => parseInt(attraction))
-    )
-
-    setResultPath(path)
-    setShowResult(true)
-
-
+    if (showResult) {
+      resetAttractions()
+    } else {
+      const { cost, path } = CalculateTSPCostNPath(
+        selectedAttractions.map((attraction) => parseInt(attraction))
+      )
+      setMinCost(cost)
+      setResultPath(path)
+      setShowResult(true)
+    }
   }
 
   return (
     <div style={{ width: '100%', height: '100vh', overflow: 'auto', backgroundColor: '#D3D3D3', padding: '50px 0' }}>
-      <Container className='text-center'>
+      <Container className='d-flex justify-content-center align-items-center flex-column text-center'>
         <Container className='w-75' style={{ marginBottom: '30px' }}>
           <h1>Férias em Barra do Garças</h1>
           <span>
@@ -37,27 +47,45 @@ export default function App() {
             deseja visitar. A partir das suas escolhas, iremos montar uma rota que saia da pousada em que você está
             hospedado, visite todos os pontos escolhidos, e retorne novamente à pousada, percorrendo o menor caminho possível.
           </span>
+
+          {showResult && 
+            <div>
+              <h6 style={{ marginTop: '30px' }}>
+                A menor rota para visitar todos os locais selecionados 
+                e retornar ao destino possui:
+              </h6>
+              <h3 style={{ color: '#20B2BB', textDecoration: 'solid underline 5px' }}>
+                {minCost / 1000.00}km
+              </h3>
+            </div>
+          }
         </Container>
         {showResult ?
           <ListGroup as="ol" numbered style={{ width: '80%' }}>
-            {resultPath.map((attractionIndex, loopIndex) =>
-              loopIndex !== resultPath.length ?
-                <ListGroup.Item as="li" className="d-flex justify-content-between align-items-start">
-                  <div className="ms-2 me-auto" style={{ width: '150px' }}>
-                    <Image fluid rounded srcSet={attractions[attractionIndex].image} />
-                    {attractions[attractionIndex].name}
-                  </div>
-                  {/* <div className="ms-2 me-auto">
-                  `Saia de ${attractions[attraction].name} para ${attractions[resultPath[index + 1]].name} percorrendo km`
-                </div>
-                <div style={{ width: '100px' }}> */}
-                  <div className="ms-2 me-auto" style={{ width: '150px' }}>
-                    <Image fluid rounded srcSet={attractions[resultPath[loopIndex + 1]]?.image} />
-                    {attractions[resultPath[loopIndex + 1]]?.name}
-                  </div>
-                </ListGroup.Item>
-                : <></>
-            )}
+            {resultPath.map((attractionIndex, loopIndex) => {
+              if (loopIndex !== resultPath.length - 1) {
+                const currentAttraction= attractions[attractionIndex]
+                const nextAttraction = attractions[resultPath[loopIndex + 1]]
+
+                return (
+                  <ListGroup.Item className="d-flex w-100 align-items-center  flex-row" key={loopIndex} as="li">
+                    <div style={{ width: '150px', marginLeft: '20px' }}>
+                      <Image fluid rounded srcSet={currentAttraction.image} />
+                      {currentAttraction.name}
+                    </div>
+                    <div style={{ width: '60%', margin: '0 40px' }}>
+                      Saia de <strong>{currentAttraction.name}</strong> para <strong>{nextAttraction?.name}</strong>{' '}
+                      percorrendo <strong>{currentAttraction.dist[resultPath[loopIndex + 1]] / 1000.00}km</strong>
+                    </div>
+                    <div style={{ width: '150px' }}>
+                      <Image fluid rounded srcSet={nextAttraction?.image} />
+                      {nextAttraction?.name}
+                    </div>
+                  </ListGroup.Item>
+                )
+              }
+              return null
+            })}
           </ListGroup>
           : <Row style={{ justifyContent: 'space-evenly' }}>
             {attractions.map((attraction, index) =>
@@ -87,7 +115,7 @@ export default function App() {
         <Button
           variant={showResult ? "secondary" : "info"} style={{ marginTop: '30px' }}
           onClick={handleButtonClick}>
-          {showResult ? "Escolher novos locais" : "Obter menor rota"}
+          {showResult ? "Escolher outros locais" : "Obter menor rota"}
         </Button>
       </Container >
     </div >
